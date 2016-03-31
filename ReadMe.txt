@@ -1,4 +1,5 @@
-This fork represents original OpenPanodroid but moved to gradle (android studio) + updated to api level 22, also added possibility to call panorama viewer from intent with various params (so this project can be used like a lib)
+This fork represents original OpenPanodroid but moved to gradle (android studio) + updated to api level 22 and type changed to library, you can call panorama viewer from intent with various params. Also you can use pano convert task
+// todo: examples
 ---------
 OpenPanodroid is a panorama image viewer for Google's Android platform.
 
