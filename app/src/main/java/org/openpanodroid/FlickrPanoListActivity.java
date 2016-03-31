@@ -563,14 +563,14 @@ public class FlickrPanoListActivity extends ListActivity implements OnItemClickL
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.about:
-                showAbout();
-                return true;
-            case R.id.preferences:
-                Intent intent = new Intent(this, PanodroidPreferencesActivity.class);
-                startActivity(intent);
-                return true;
+        int i = item.getItemId();
+        if (i == R.id.about) {
+            showAbout();
+            return true;
+        } else if (i == R.id.preferences) {
+            Intent intent = new Intent(this, PanodroidPreferencesActivity.class);
+            startActivity(intent);
+            return true;
         }
 
         return false;

@@ -89,19 +89,19 @@ public class FlickrPanoViewerActivity extends PanoViewerActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.imageInfo:
-                showImageInfo();
-                return true;
-            case R.id.flickrPhotoPage:
-                showFlickrPhotoPage();
-                return true;
-            case R.id.about:
-                showAbout();
-                return true;
-            default:
-                Assert.fail();
-                return false;
+        int i = item.getItemId();
+        if (i == R.id.imageInfo) {
+            showImageInfo();
+            return true;
+        } else if (i == R.id.flickrPhotoPage) {
+            showFlickrPhotoPage();
+            return true;
+        } else if (i == R.id.about) {
+            showAbout();
+            return true;
+        } else {
+            Assert.fail();
+            return false;
         }
     }
 

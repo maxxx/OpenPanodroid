@@ -445,13 +445,13 @@ public class PanoViewerActivity extends Activity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.about:
-                showAbout();
-                return true;
-            default:
-                Assert.fail();
-                return false;
+        int i = item.getItemId();
+        if (i == R.id.about) {
+            showAbout();
+            return true;
+        } else {
+            Assert.fail();
+            return false;
         }
     }
 
