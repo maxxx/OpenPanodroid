@@ -125,7 +125,7 @@ public class PanoConversionTask extends AsyncTask<Bitmap, Integer, CubicPanoNati
         bmp.recycle();
         publishProgress(2);
         if (!pathToSave.isEmpty()) {
-            saveBitmap(front, pathToSave + "_b.jpg"); // _back
+            saveBitmap(back, pathToSave + "_b.jpg"); // _back
         }
 
         if (isCancelled()) {
@@ -140,7 +140,7 @@ public class PanoConversionTask extends AsyncTask<Bitmap, Integer, CubicPanoNati
         bmp.recycle();
         publishProgress(3);
         if (!pathToSave.isEmpty()) {
-            saveBitmap(front, pathToSave + "_t.jpg");
+            saveBitmap(top, pathToSave + "_t.jpg");
         }
 
         if (isCancelled()) {
@@ -155,7 +155,7 @@ public class PanoConversionTask extends AsyncTask<Bitmap, Integer, CubicPanoNati
         bmp.recycle();
         publishProgress(4);
         if (!pathToSave.isEmpty()) {
-            saveBitmap(front, pathToSave + "_d.jpg"); // _down
+            saveBitmap(bottom, pathToSave + "_d.jpg"); // _down
         }
 
         if (isCancelled()) {
@@ -170,7 +170,7 @@ public class PanoConversionTask extends AsyncTask<Bitmap, Integer, CubicPanoNati
         bmp.recycle();
         publishProgress(5);
         if (!pathToSave.isEmpty()) {
-            saveBitmap(front, pathToSave + "_r.jpg");
+            saveBitmap(right, pathToSave + "_r.jpg");
         }
 
         if (isCancelled()) {
@@ -185,7 +185,7 @@ public class PanoConversionTask extends AsyncTask<Bitmap, Integer, CubicPanoNati
         bmp.recycle();
         publishProgress(6);
         if (!pathToSave.isEmpty()) {
-            saveBitmap(front, pathToSave + "_l.jpg");
+            saveBitmap(left, pathToSave + "_l.jpg");
         }
 
         CubicPanoNative cubic = new CubicPanoNative(front, back, top, bottom, left, right);
