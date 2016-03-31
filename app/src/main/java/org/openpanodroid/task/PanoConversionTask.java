@@ -6,6 +6,8 @@ import android.content.DialogInterface;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.util.Log;
 import android.view.Display;
 import android.view.WindowManager;
@@ -17,6 +19,8 @@ import org.openpanodroid.UIUtilities;
 import org.openpanodroid.panoutils.android.CubicPanoNative;
 
 import java.io.ByteArrayOutputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 
 /**
  * Created by Maxim Smirnov on 31.03.16.
@@ -24,6 +28,8 @@ import java.io.ByteArrayOutputStream;
  */
 public class PanoConversionTask extends AsyncTask<Bitmap, Integer, CubicPanoNative> {
 
+    private Runnable onFinishRun = null;
+    private String pathToSave = "";
     private Context context;
     private PanoViewerActivity panoViewerActivity = null;
     private ProgressDialog waitDialog = null;
@@ -40,11 +46,17 @@ public class PanoConversionTask extends AsyncTask<Bitmap, Integer, CubicPanoNati
 
     /**
      * @param context
-     * @param pano    - original image which should be converted
+     * @param pano       - original image which should be converted
+     * @param pathToSave - where to save converted images
+     * @param onFinish   - custom runnable executed on convertation finish
      */
-    // todo: save converted files
-    public PanoConversionTask(Context context, Bitmap pano) {
+    public PanoConversionTask(@NonNull Context context,
+                              @NonNull Bitmap pano,
+                              @NonNull String pathToSave,
+                              @Nullable Runnable onFinish) {
         this.context = context;
+        this.pathToSave = pathToSave;
+        this.onFinishRun = onFinish;
         int maxTextureSize = GlobalConstants.DEFAULT_MAX_TEXTURE_SIZE;
 
         // On the one hand, we don't want to waste memory for textures whose resolution
@@ -97,6 +109,9 @@ public class PanoConversionTask extends AsyncTask<Bitmap, Integer, CubicPanoNati
         Bitmap front = createPurgableBitmap(bmp);
         bmp.recycle();
         publishProgress(1);
+        if (!pathToSave.isEmpty()) {
+            saveBitmap(front, pathToSave + "_f.jpg");
+        }
 
         if (isCancelled()) {
             return null;
@@ -109,6 +124,9 @@ public class PanoConversionTask extends AsyncTask<Bitmap, Integer, CubicPanoNati
         Bitmap back = createPurgableBitmap(bmp);
         bmp.recycle();
         publishProgress(2);
+        if (!pathToSave.isEmpty()) {
+            saveBitmap(front, pathToSave + "_b.jpg"); // _back
+        }
 
         if (isCancelled()) {
             return null;
@@ -121,6 +139,9 @@ public class PanoConversionTask extends AsyncTask<Bitmap, Integer, CubicPanoNati
         Bitmap top = createPurgableBitmap(bmp);
         bmp.recycle();
         publishProgress(3);
+        if (!pathToSave.isEmpty()) {
+            saveBitmap(front, pathToSave + "_t.jpg");
+        }
 
         if (isCancelled()) {
             return null;
@@ -133,6 +154,9 @@ public class PanoConversionTask extends AsyncTask<Bitmap, Integer, CubicPanoNati
         Bitmap bottom = createPurgableBitmap(bmp);
         bmp.recycle();
         publishProgress(4);
+        if (!pathToSave.isEmpty()) {
+            saveBitmap(front, pathToSave + "_d.jpg"); // _down
+        }
 
         if (isCancelled()) {
             return null;
@@ -145,6 +169,9 @@ public class PanoConversionTask extends AsyncTask<Bitmap, Integer, CubicPanoNati
         Bitmap right = createPurgableBitmap(bmp);
         bmp.recycle();
         publishProgress(5);
+        if (!pathToSave.isEmpty()) {
+            saveBitmap(front, pathToSave + "_r.jpg");
+        }
 
         if (isCancelled()) {
             return null;
@@ -157,6 +184,9 @@ public class PanoConversionTask extends AsyncTask<Bitmap, Integer, CubicPanoNati
         Bitmap left = createPurgableBitmap(bmp);
         bmp.recycle();
         publishProgress(6);
+        if (!pathToSave.isEmpty()) {
+            saveBitmap(front, pathToSave + "_l.jpg");
+        }
 
         CubicPanoNative cubic = new CubicPanoNative(front, back, top, bottom, left, right);
 
@@ -212,6 +242,11 @@ public class PanoConversionTask extends AsyncTask<Bitmap, Integer, CubicPanoNati
         }
 
         waitDialog.dismiss();
+
+        if (onFinishRun != null) {
+            onFinishRun.run();
+        }
+
         if (panoViewerActivity != null) {
             panoViewerActivity.pano.recycle();
             panoViewerActivity.pano = null;
@@ -245,6 +280,24 @@ public class PanoConversionTask extends AsyncTask<Bitmap, Integer, CubicPanoNati
         public void onClick(DialogInterface dialog, int which) {
             // After an (fatal) error dialog, the activity will be dismissed.
             panoViewerActivity.finish();
+        }
+    }
+
+    public static void saveBitmap(Bitmap result, String path) {
+        FileOutputStream out = null;
+        try {
+            out = new FileOutputStream(path);
+            result.compress(Bitmap.CompressFormat.JPEG, 85, out);
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (out != null) {
+                    out.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 }

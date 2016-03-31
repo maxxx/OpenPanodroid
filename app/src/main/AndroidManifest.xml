@@ -10,7 +10,10 @@
 
     <uses-sdk android:minSdkVersion="14" android:targetSdkVersion="22"/>
 
-    <application android:icon="@drawable/icon" android:label="@string/app_name" android:largeHeap="true">
+    <application android:icon="@drawable/icon"
+                 android:label="@string/app_name"
+                 android:largeHeap="true"
+                 android:hardwareAccelerated="true">
         <activity android:name=".PanodroidActivity"
                   android:label="@string/app_name">
             <intent-filter>
