@@ -1,3 +1,5 @@
+This fork represents original OpenPanodroid but moved to gradle (android studio) + updated to api level 22, also added possibility to call panorama viewer from intent with various params (so this porject can be used like a lib)
+---------
 OpenPanodroid is a panorama image viewer for Google's Android platform.
 
 OpenPanodroid was originally developed by Frank Dürr 
