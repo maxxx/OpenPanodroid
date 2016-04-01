@@ -71,7 +71,7 @@ public class PanoConversionTask extends AsyncTask<Bitmap, Integer, CubicPanoNati
 
         int optimalTextureSize = PanoViewerActivity.getOptimalFaceSize(maxDisplaySize, pano.getWidth(), GlobalConstants
                 .DEFAULT_FOV_DEG);
-        int textureSize = PanoViewerActivity.toPowerOfTwo(optimalTextureSize);
+        textureSize = PanoViewerActivity.toPowerOfTwo(optimalTextureSize);
         textureSize = textureSize <= maxTextureSize ? textureSize : maxTextureSize;
 
         Log.i("PanoConversionTask", "Texture size: " + textureSize + " (optimal size was " + optimalTextureSize + ")");
@@ -104,6 +104,7 @@ public class PanoConversionTask extends AsyncTask<Bitmap, Integer, CubicPanoNati
 
         bmp = CubicPanoNative.getCubeSide(pano, CubicPanoNative.TextureFaces.front, textureSize);
         if (bmp == null) {
+            Log.e("PanoConversionTask", "doInBackground: bmp null for front");
             return null;
         }
         Bitmap front = createPurgableBitmap(bmp);
@@ -119,6 +120,7 @@ public class PanoConversionTask extends AsyncTask<Bitmap, Integer, CubicPanoNati
 
         bmp = CubicPanoNative.getCubeSide(pano, CubicPanoNative.TextureFaces.back, textureSize);
         if (bmp == null) {
+            Log.e("PanoConversionTask", "doInBackground: bmp null for back");
             return null;
         }
         Bitmap back = createPurgableBitmap(bmp);
@@ -134,6 +136,7 @@ public class PanoConversionTask extends AsyncTask<Bitmap, Integer, CubicPanoNati
 
         bmp = CubicPanoNative.getCubeSide(pano, CubicPanoNative.TextureFaces.top, textureSize);
         if (bmp == null) {
+            Log.e("PanoConversionTask", "doInBackground: bmp null for top");
             return null;
         }
         Bitmap top = createPurgableBitmap(bmp);
@@ -149,6 +152,7 @@ public class PanoConversionTask extends AsyncTask<Bitmap, Integer, CubicPanoNati
 
         bmp = CubicPanoNative.getCubeSide(pano, CubicPanoNative.TextureFaces.bottom, textureSize);
         if (bmp == null) {
+            Log.e("PanoConversionTask", "doInBackground: bmp null for bottom");
             return null;
         }
         Bitmap bottom = createPurgableBitmap(bmp);
@@ -164,6 +168,7 @@ public class PanoConversionTask extends AsyncTask<Bitmap, Integer, CubicPanoNati
 
         bmp = CubicPanoNative.getCubeSide(pano, CubicPanoNative.TextureFaces.right, textureSize);
         if (bmp == null) {
+            Log.e("PanoConversionTask", "doInBackground: bmp null for right");
             return null;
         }
         Bitmap right = createPurgableBitmap(bmp);
@@ -179,6 +184,7 @@ public class PanoConversionTask extends AsyncTask<Bitmap, Integer, CubicPanoNati
 
         bmp = CubicPanoNative.getCubeSide(pano, CubicPanoNative.TextureFaces.left, textureSize);
         if (bmp == null) {
+            Log.e("PanoConversionTask", "doInBackground: bmp null for left");
             return null;
         }
         Bitmap left = createPurgableBitmap(bmp);
@@ -242,6 +248,10 @@ public class PanoConversionTask extends AsyncTask<Bitmap, Integer, CubicPanoNati
         }
 
         waitDialog.dismiss();
+
+        if (result == null) {
+            Log.e("PanoConversionTask", "onPostExecute: result null!");
+        }
 
         if (onFinishRun != null) {
             onFinishRun.run();
