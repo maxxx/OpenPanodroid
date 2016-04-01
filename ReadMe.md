@@ -4,7 +4,7 @@ Can be included as Gradle dependency (look how to work with jitpack - https://ji
 
     compile 'com.github.maxxx:OpenPanodroid:1.3'
 
-To convert panoram image into cube sides use this snippet as example (you must decode ишеьфз with ARGB_8888 !):
+To convert panoram image into cube sides use this snippet as example (you must decode bitmap with ARGB_8888 !):
   
 
       private void convertPanoram(final String filePath) {
