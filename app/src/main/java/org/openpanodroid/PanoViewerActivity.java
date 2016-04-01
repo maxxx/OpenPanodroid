@@ -432,7 +432,7 @@ public class PanoViewerActivity extends Activity {
         Bitmap btop = createPurgableBitmap(top);
 
 
-        cubicPano = new CubicPanoNative(bFront, bback, btop, bbottom, bright, bleft);
+        cubicPano = new CubicPanoNative(bFront, bback, btop, bbottom, bleft, bright);
         setupOpenGLView();
     }
 

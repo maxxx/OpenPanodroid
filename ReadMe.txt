@@ -1,5 +1,63 @@
 This fork represents original OpenPanodroid but moved to gradle (android studio) + updated to api level 22 and type changed to library, you can call panorama viewer from intent with various params. Also you can use pano convert task
-// todo: examples
+
+To convert panoram image into cube sides use this snippet as example (you must decode bmp with ARGB_8888 !):
+    private void convertPanoram(final String filePath) {
+        Bitmap pano = loadBitmap(filePath);
+        final String dir = Environment.getExternalStorageDirectory() + "/yourApp/";
+
+        new PanoConversionTask(getActivity(), pano, dir, new Runnable() {
+            @Override
+            public void run() {
+                openPanoram();
+            }
+        }).execute(pano);
+    }
+    public static Bitmap loadBitmap(String imgPath) {
+        BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inPreferredConfig = Bitmap.Config.ARGB_8888;
+
+        try {
+            return BitmapFactory.decodeFile(imgPath, options);
+        } catch (Exception var3) {
+            var3.printStackTrace();
+            return null;
+        }
+    }
+
+
+To call panoram viewer use this snippet as example:
+    private void openPanoram(String panoImagePath) {
+        Intent intent = new Intent(getActivity(), PanoViewerActivity.class);
+        Bundle b = new Bundle();
+
+        b.putBoolean(PanoViewerActivity.INTENT_PROVIDE_IMAGES, true);
+        b.putSerializable(PanoViewerActivity.ORIGINAL_BITMAP_KEY, new File(panoImagePath));
+
+        intent.putExtras(b);
+        startActivity(intent);
+    }
+    -OR with already converted files -
+    private void openPanoram(String dir) {
+        Intent intent = new Intent(getActivity(), PanoViewerActivity.class);
+        Bundle b = new Bundle();
+
+        b.putBoolean(PanoViewerActivity.INTENT_PROVIDE_IMAGES, true);
+        b.putSerializable(PanoViewerActivity.FRONT_BITMAP_KEY, new File(dir + "_f.jpg"));
+        b.putSerializable(PanoViewerActivity.BACK_BITMAP_KEY, new File(dir + "_b.jpg"));
+        b.putSerializable(PanoViewerActivity.TOP_BITMAP_KEY, new File(dir + "_t.jpg"));
+        b.putSerializable(PanoViewerActivity.BOTTOM_BITMAP_KEY, new File(dir + "_d.jpg"));
+        b.putSerializable(PanoViewerActivity.RIGHT_BITMAP_KEY, new File(dir + "_r.jpg"));
+        b.putSerializable(PanoViewerActivity.LEFT_BITMAP_KEY, new File(dir + "_l.jpg"));
+
+        intent.putExtras(b);
+        startActivity(intent);
+    }
+
+Don't forget to register this activity in your manifest
+<activity
+        android:name="org.openpanodroid.PanoViewerActivity"
+        android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|uiMode|screenSize|smallestScreenSize|locale"
+        android:windowSoftInputMode="stateAlwaysHidden|adjustPan" />
 ---------
 OpenPanodroid is a panorama image viewer for Google's Android platform.
 
