@@ -1,6 +1,6 @@
-This fork represents original OpenPanodroid but moved to gradle (android studio) + updated to api level 22 and type changed to library, you can call panorama viewer from intent with various params. Also you can use pano convert task
+This fork represents original OpenPanodroid but moved to gradle (android studio) + updated to api level 22 and type changed to library, you can call panorama viewer from intent with various params. Also you can use pano convert task.
 
-To convert panoram image into cube sides use this snippet as example (you must decode bmp with ARGB_8888 !):
+To convert panoram image into cube sides use this snippet as example (you must decode ишеьфз with ARGB_8888 !):
     private void convertPanoram(final String filePath) {
         Bitmap pano = loadBitmap(filePath);
         final String dir = Environment.getExternalStorageDirectory() + "/yourApp/";
@@ -55,9 +55,7 @@ To call panoram viewer use this snippet as example:
 
 Don't forget to register this activity in your manifest
 <activity
-        android:name="org.openpanodroid.PanoViewerActivity"
-        android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|uiMode|screenSize|smallestScreenSize|locale"
-        android:windowSoftInputMode="stateAlwaysHidden|adjustPan" />
+        android:name="org.openpanodroid.PanoViewerActivity"/>
 ---------
 OpenPanodroid is a panorama image viewer for Google's Android platform.
 
