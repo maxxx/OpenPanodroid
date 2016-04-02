@@ -11,7 +11,7 @@ To convert panoram image into cube sides use this snippet as example (you must d
             Bitmap pano = loadBitmap(filePath);
             final String dir = Environment.getExternalStorageDirectory() + "/yourApp/";
     
-            new PanoConversionTask(getActivity(), pano, dir, new Runnable() {
+            new PanoConversionTask(getActivity(), pano, dir, 0.0f, new Runnable() {
                 @Override
                 public void run() {
                     openPanoram();
