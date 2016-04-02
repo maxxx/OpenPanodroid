@@ -20,7 +20,6 @@
 package org.openpanodroid;
 
 import android.app.Activity;
-import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -29,29 +28,32 @@ import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.preference.PreferenceManager;
 import android.util.Log;
-import android.view.*;
+import android.view.Display;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
+import android.view.WindowManager;
+
 import junit.framework.Assert;
-import org.openpanodroid.ioutils.Pipe;
+
 import org.openpanodroid.panoutils.android.CubicPanoNative;
 import org.openpanodroid.panoutils.android.CubicPanoNative.TextureFaces;
+import org.openpanodroid.task.BitmapDownloadTask;
 import org.openpanodroid.task.PanoConversionTask;
 
-import java.io.*;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLConnection;
+import java.io.File;
 
 public class PanoViewerActivity extends Activity {
-    private static final String LOG_TAG = FlickrSearchActivity.class.getSimpleName();
+    public static final String LOG_TAG = FlickrSearchActivity.class.getSimpleName();
     public static final java.lang.String INTENT_PROVIDE_IMAGES = "images_provided";
 
     public static int IMG_QUALITY = 85;
 
+    public static final String ORIGINAL_BITMAP_LINK_KEY = "origBitmapLink"; // http...
     public static final String ORIGINAL_BITMAP_KEY = "origBitmap";
     public static final String FRONT_BITMAP_KEY = "frontBitmap";
     public static final String BACK_BITMAP_KEY = "backBitmap";
@@ -78,207 +80,6 @@ public class PanoViewerActivity extends Activity {
         public void onClick(DialogInterface dialog, int which) {
             // After an (fatal) error dialog, the activity will be dismissed.
             finish();
-        }
-    }
-
-    private class BitmapDecoderThread extends Thread {
-        public Bitmap bitmap;
-        public String errorMsg;
-
-        private InputStream is;
-
-        BitmapDecoderThread(InputStream is) {
-            bitmap = null;
-            this.is = is;
-        }
-
-        @Override
-        public void run() {
-            BitmapFactory.Options options = new BitmapFactory.Options();
-            options.inDither = false;
-            options.inScaled = false;
-            //options.inPreferredConfig = Bitmap.Config.RGB_565;
-            BitmapUtilities.setHiddenNativeAllocField(options);
-
-            //ActivityManager activityManager = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
-            //int largeMem = activityManager.getLargeMemoryClass();
-            //int regularMem = activityManager.getMemoryClass();
-
-            try {
-                bitmap = BitmapFactory.decodeStream(is, null, options);
-            } catch (OutOfMemoryError e) {
-                Log.e(LOG_TAG, "Failed to decode image: " + e.getMessage());
-                errorMsg = getString(R.string.outofmemory);
-            } catch (Exception e) {
-                Log.e(LOG_TAG, "Failed to decode image: " + e.getMessage());
-            } finally {
-                try {
-                    is.close();
-                } catch (IOException e) {
-                }
-                if (bitmap == null && errorMsg == null) {
-                    Log.e(LOG_TAG, "Failed to decode image");
-                    errorMsg = getString(R.string.imageDecodeFailed);
-                }
-            }
-        }
-    }
-
-    private class BitmapDownloadTask extends AsyncTask<Uri, Integer, Bitmap> {
-
-        private final static int BUFFER_SIZE = 8192;
-
-        private InputStream downloadStream = null;
-        private BitmapDecoderThread bitmapDecoder = null;
-        private ProgressDialog waitDialog = null;
-        private boolean destroyed = false;
-
-        @Override
-        protected void onPreExecute() {
-            waitDialog = new ProgressDialog(PanoViewerActivity.this);
-            waitDialog.setMessage(getString(R.string.loadingPanoImage));
-            waitDialog.setCancelable(false);
-            waitDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-            waitDialog.setButton(ProgressDialog.BUTTON_NEGATIVE,
-                    getString(R.string.cancel),
-                    new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int id) {
-                            cancel(true);
-                            if (downloadStream != null) {
-                                // Force download to end.
-                                try {
-                                    downloadStream.close();
-                                } catch (IOException e) {
-                                }
-                            }
-                        }
-                    });
-            waitDialog.show();
-        }
-
-        @Override
-        protected Bitmap doInBackground(Uri... params) {
-            Assert.assertTrue(params.length > 0);
-            Uri uri = params[0];
-            int contentLength = -1;
-            byte[] buffer = new byte[BUFFER_SIZE];
-            URLConnection connection;
-            URL url;
-
-            try {
-                url = new URL(uri.toString());
-            } catch (MalformedURLException ex) {
-                url = null;
-            }
-
-            Pipe pipe = new Pipe(BUFFER_SIZE);
-            OutputStream pipeOutput = pipe.getOutputStream();
-            InputStream pipeInput = pipe.getInputStream();
-
-            Bitmap bitmap = null;
-
-            try {
-                if (url != null) {
-                    // We try to open an URL connection since this gives us a content length
-                    // (in contrast to the generic way of opening an URI).
-                    connection = url.openConnection();
-                    downloadStream = new BufferedInputStream(connection.getInputStream());
-                    contentLength = connection.getContentLength();
-                } else {
-                    // Try generic way to open URI.
-                    downloadStream = getContentResolver().openInputStream(uri);
-                }
-
-                if (contentLength > 0) {
-                    waitDialog.setMax(contentLength);
-                } else {
-                    waitDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
-                }
-
-                bitmapDecoder = new BitmapDecoderThread(pipeInput);
-                bitmapDecoder.start();
-
-                int currentLength = 0;
-                int readCnt;
-
-                while (!isCancelled() && (readCnt = downloadStream.read(buffer)) != -1) {
-                    pipeOutput.write(buffer, 0, readCnt);
-                    currentLength += readCnt;
-
-                    if (contentLength > 0) {
-                        publishProgress(currentLength);
-                    }
-                }
-            } catch (Exception e) {
-                Log.e(LOG_TAG, "Failed to load image: " + e.getMessage());
-            } finally {
-                if (pipeOutput != null) {
-                    try {
-                        pipeOutput.close();
-                    } catch (IOException e) {
-                    }
-                }
-            }
-
-            if (bitmapDecoder != null) {
-                try {
-                    bitmapDecoder.join();
-                    bitmap = bitmapDecoder.bitmap;
-                } catch (InterruptedException e) {
-                    Log.e(LOG_TAG, "Download taks interrupted: " + e.getMessage());
-                }
-            }
-
-            return bitmap;
-        }
-
-        @Override
-        protected void onProgressUpdate(Integer... progress) {
-            Assert.assertTrue(progress.length > 0);
-            int p = progress[0];
-            waitDialog.setProgress(p);
-        }
-
-        synchronized boolean isDestroyed() {
-            return destroyed;
-        }
-
-        synchronized void destroy() {
-            destroyed = true;
-            cancel(true);
-        }
-
-        @Override
-        protected void onCancelled() {
-            if (isDestroyed()) {
-                return;
-            }
-
-            waitDialog.dismiss();
-            finish();
-        }
-
-        @Override
-        protected void onPostExecute(Bitmap result) {
-            if (isDestroyed()) {
-                return;
-            }
-
-            waitDialog.dismiss();
-            if (result == null) {
-                String msg = getString(R.string.loadingPanoFailed);
-                if (bitmapDecoder != null && bitmapDecoder.errorMsg != null) {
-                    msg += " (" + bitmapDecoder.errorMsg + ")";
-                }
-                UIUtilities.showAlert(PanoViewerActivity.this, null, msg, new ClickListenerErrorDialog());
-            } else if (result.getWidth() != 2 * result.getHeight()) {
-                String msg = getString(R.string.invalidPanoImage);
-                UIUtilities.showAlert(PanoViewerActivity.this, null, msg, new ClickListenerErrorDialog());
-            } else {
-                pano = result;
-                convertCubicPano(pano);
-            }
         }
     }
 
@@ -322,18 +123,27 @@ public class PanoViewerActivity extends Activity {
         super.onCreate(savedInstanceState);
 
         stateSaved = false;
+        boolean withUrl = false;
 
         if (getIntent().getExtras() != null && getIntent().getExtras().containsKey(INTENT_PROVIDE_IMAGES)) {
             if (getIntent().getExtras().containsKey(ORIGINAL_BITMAP_KEY)) {
                 File f = (File) getIntent().getExtras().getSerializable(ORIGINAL_BITMAP_KEY);
                 processImageFromIntent(f);
+            } else if (getIntent().getExtras().containsKey(ORIGINAL_BITMAP_LINK_KEY)) {
+                String link = getIntent().getExtras().getString(ORIGINAL_BITMAP_LINK_KEY);
+                ;
+                panoUri = Uri.parse(link);
+                withUrl = true;
             } else {
                 processImagesFromIntent();
             }
-            return;
         } else {
             setupImageInfo();
+            withUrl = true;
         }
+
+        if (!withUrl)
+            return;
 
         Bitmap front, back, top, bottom, left, right;
         front = back = top = bottom = left = right = null;
@@ -511,11 +321,11 @@ public class PanoViewerActivity extends Activity {
         Assert.assertTrue(panoUri != null);
         Log.i(LOG_TAG, "Panorama Uri: " + panoUri.toString());
 
-        panoDownloadTask = new BitmapDownloadTask();
+        panoDownloadTask = new BitmapDownloadTask(this);
         panoDownloadTask.execute(panoUri);
     }
 
-    private void convertCubicPano(final Bitmap pano) {
+    public void convertCubicPano(final Bitmap pano) {
         Assert.assertTrue(pano != null);
 
         Log.i(LOG_TAG, "Converting panorama ...");

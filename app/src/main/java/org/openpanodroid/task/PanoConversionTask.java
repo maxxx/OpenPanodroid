@@ -1,17 +1,22 @@
 package org.openpanodroid.task;
 
+import android.annotation.SuppressLint;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Display;
 import android.view.WindowManager;
+
 import junit.framework.Assert;
+
 import org.openpanodroid.GlobalConstants;
 import org.openpanodroid.PanoViewerActivity;
 import org.openpanodroid.R;
@@ -21,6 +26,7 @@ import org.openpanodroid.panoutils.android.CubicPanoNative;
 import java.io.ByteArrayOutputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.lang.reflect.Method;
 
 /**
  * Created by Maxim Smirnov on 31.03.16.
@@ -48,26 +54,42 @@ public class PanoConversionTask extends AsyncTask<Bitmap, Integer, CubicPanoNati
      * @param context
      * @param pano       - original image which should be converted
      * @param pathToSave - where to save converted images
+     * @param fovDeg     - fov degree, 90 by default
      * @param onFinish   - custom runnable executed on convertation finish
      */
     public PanoConversionTask(@NonNull Context context,
                               @NonNull Bitmap pano,
                               @NonNull String pathToSave,
+                              float fovDeg,
                               @Nullable Runnable onFinish) {
         this.context = context;
         this.pathToSave = pathToSave;
         this.onFinishRun = onFinish;
         int maxTextureSize = GlobalConstants.DEFAULT_MAX_TEXTURE_SIZE;
 
-        // On the one hand, we don't want to waste memory for textures whose resolution
-        // is too large for the device. On the other hand, we want to have a resolution
-        // that is high enough to give us good quality on any device. However, we don't
-        // know the resolution of the GLView a priori, and it could be resized later.
-        // Therefore, we use the display size to calculate the optimal texture size.
-        Display display = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
-        int width = display.getWidth();
-        int height = display.getHeight();
-        int maxDisplaySize = width > height ? width : height;
+        int maxDisplaySize = calcMaxDisplaySize(context);
+
+        int optimalTextureSize = PanoViewerActivity.getOptimalFaceSize(maxDisplaySize, pano.getWidth(), fovDeg < 1.0f ? GlobalConstants
+                .DEFAULT_FOV_DEG : fovDeg);
+        textureSize = PanoViewerActivity.toPowerOfTwo(optimalTextureSize);
+        textureSize = textureSize <= maxTextureSize ? textureSize : maxTextureSize;
+
+        Log.i("PanoConversionTask", "Texture size: " + textureSize + " (optimal size was " + optimalTextureSize + ")");
+    }
+
+    /**
+     * @param context
+     * @param pano       - original image which should be converted
+     * @param pathToSave - where to save converted images
+     */
+    public PanoConversionTask(@NonNull Context context,
+                              @NonNull Bitmap pano,
+                              @NonNull String pathToSave) {
+        this.context = context;
+        this.pathToSave = pathToSave;
+        int maxTextureSize = GlobalConstants.DEFAULT_MAX_TEXTURE_SIZE;
+
+        int maxDisplaySize = calcMaxDisplaySize(context);
 
         int optimalTextureSize = PanoViewerActivity.getOptimalFaceSize(maxDisplaySize, pano.getWidth(), GlobalConstants
                 .DEFAULT_FOV_DEG);
@@ -280,7 +302,6 @@ public class PanoConversionTask extends AsyncTask<Bitmap, Integer, CubicPanoNati
         waitDialog.setProgress(p);
     }
 
-
     public void setDialogMessage(final String dialogMessage) {
         this.dialogMessage = dialogMessage;
     }
@@ -309,5 +330,45 @@ public class PanoConversionTask extends AsyncTask<Bitmap, Integer, CubicPanoNati
                 e.printStackTrace();
             }
         }
+    }
+
+    /**
+     * use real device W and H
+     */
+    // On the one hand, we don't want to waste memory for textures whose resolution
+    // is too large for the device. On the other hand, we want to have a resolution
+    // that is high enough to give us good quality on any device. However, we don't
+    // know the resolution of the GLView a priori, and it could be resized later.
+    // Therefore, we use the display size to calculate the optimal texture size.
+    @SuppressLint("NewApi")
+    protected int calcMaxDisplaySize(Context context) {
+        final DisplayMetrics metrics = new DisplayMetrics();
+        Display display = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
+
+        display.getMetrics(metrics);
+        int width = metrics.widthPixels;
+        int height = metrics.heightPixels;
+
+        // only 14 15 16
+        if (Build.VERSION.SDK_INT >= 14 && Build.VERSION.SDK_INT < 17) {
+            Method mGetRawH, mGetRawW;
+            try {
+                mGetRawH = Display.class.getMethod("getRawHeight");
+                mGetRawW = Display.class.getMethod("getRawWidth");
+                width = (Integer) mGetRawW.invoke(display);
+                height = (Integer) mGetRawH.invoke(display);
+            } catch (Exception e) {
+                Log.e("mGetRawH", "error!");
+                e.printStackTrace();
+            }
+        } else if (Build.VERSION.SDK_INT >= 17) // 4.2.2+
+        {
+            display.getRealMetrics(metrics);
+
+            width = metrics.widthPixels;
+            height = metrics.heightPixels;
+        }
+        int maxDisplaySize = width > height ? width : height;
+        return maxDisplaySize;
     }
 }
