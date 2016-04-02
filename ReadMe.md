@@ -33,7 +33,8 @@ To convert panoram image into cube sides use this snippet as example (you must d
 
 To call panoram viewer use this snippet as example:
  
-- With bitmap -
+-With bitmap-
+
        private void openPanoram(String panoImagePath) {
             Intent intent = new Intent(getActivity(), PanoViewerActivity.class);
             Bundle b = new Bundle();
@@ -45,7 +46,8 @@ To call panoram viewer use this snippet as example:
             startActivity(intent);
         }
 
-- With link -
+-With link-
+
        private void openPanoram(String uri) {
             Intent intent = new Intent(getActivity(), PanoViewerActivity.class);
             Bundle b = new Bundle();
@@ -57,7 +59,7 @@ To call panoram viewer use this snippet as example:
             startActivity(intent);
         }
 
-- With already converted files -
+-With already converted files-
     
     private void openPanoram(String dir) {
         Intent intent = new Intent(getActivity(), PanoViewerActivity.class);
