@@ -2,7 +2,7 @@ This fork represents original OpenPanodroid but moved to gradle (android studio)
 
 Can be included as Gradle dependency (look how to work with jitpack - https://jitpack.io/, see Releases for version):
 
-    compile 'com.github.maxxx:OpenPanodroid:1.x'
+    compile 'com.github.maxxx:OpenPanodroid:1.+'
 
 To convert panoram image into cube sides use this snippet as example (you must decode bitmap with ARGB_8888 !):
   
